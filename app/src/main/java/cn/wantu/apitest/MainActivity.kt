@@ -5,6 +5,8 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import androidx.activity.ComponentActivity
+import cn.wantu.apitest.data.ApiTestConfig
+import cn.wantu.apitest.dialog.DownloadProgressDialogFragment
 import com.google.gson.Gson
 import okhttp3.Request
 import okio.BufferedSink
@@ -15,10 +17,13 @@ import java.io.File
 import kotlin.concurrent.thread
 
 class MainActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val app = application as ApiApp
         val client = app.okHttpClient
+        val handler = Handler(mainLooper)
+//        var dialog = DownloadProgressDialogFragment()
         thread {
             val request = Request.Builder()
                 .url("https://docs.wty5.cn/App/ApiTestConfig.json")
@@ -32,8 +37,10 @@ class MainActivity : ComponentActivity() {
             }else{
                 pi.versionCode.toLong()
             }
+            println(currentVersion)
+            println(json.versionCode)
             if (currentVersion < json.versionCode){
-                Handler(mainLooper).post {
+                handler.post {
                     AlertDialog.Builder(this).setTitle("有新版本v${json.version}").setMessage(json.content)
                         .setPositiveButton("更新"){_,_->
                             thread {
@@ -79,8 +86,7 @@ class MainActivity : ComponentActivity() {
         }
 
     }
-    fun gotoTestPage(){
+    private fun gotoTestPage(){
 
     }
-    data class ApiTestConfig(val versionCode: Long, val version: String, val content: String, val download: String, val others: Any)
 }
