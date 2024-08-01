@@ -7,6 +7,7 @@ import okhttp3.Headers
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 
 
 object OkHttpUtils {
@@ -67,6 +68,7 @@ object OkHttpUtils {
             return builder.build().toString()
         }
     }
+
     class PostBuilder(private val url: String) {
         private val _headers = Headers.Builder()
         private var _requestBody: RequestBody? = null
@@ -77,7 +79,10 @@ object OkHttpUtils {
 
         private fun build() = okhttp3.Request.Builder()
             .url(url)
-            .post(_requestBody ?: throw IllegalStateException("RequestBody is required for POST requests."))
+            .post(
+                _requestBody
+                    ?: throw IllegalStateException("RequestBody is required for POST requests.")
+            )
             .headers(_headers.build())
             .build()
 
@@ -99,7 +104,7 @@ object OkHttpUtils {
         }
 
         fun jsonBody(json: String): PostBuilder {
-            _requestBody = RequestBody.create("application/json; charset=utf-8".toMediaType(), json)
+            _requestBody = json.toRequestBody("application/json; charset=utf-8".toMediaType())
             return this
         }
 

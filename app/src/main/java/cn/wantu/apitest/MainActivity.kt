@@ -24,18 +24,18 @@ import okio.sink
 import java.io.File
 
 class MainActivity : ComponentActivity() {
-    companion object{
-        lateinit var json:ApiTestConfig
+    companion object {
+        lateinit var json: ApiTestConfig
     }
 
-    private val getUnknownAppSourcesPermission = registerForActivityResult(ActivityResultContracts.StartActivityForResult()){ result ->
-        if(result.resultCode == RESULT_OK){
-            startActivity(newInstallIntent())
-        }else{
-            Toast.makeText(this, "请求权限失败", Toast.LENGTH_SHORT).show()
+    private val getUnknownAppSourcesPermission =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == RESULT_OK) {
+                startActivity(newInstallIntent())
+            } else {
+                Toast.makeText(this, "请求权限失败", Toast.LENGTH_SHORT).show()
+            }
         }
-    }
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -153,7 +153,7 @@ class MainActivity : ComponentActivity() {
                 intent1.data = Uri.parse("package:${packageName}")
                 if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.R) {
                     startActivityForResult(intent1, -1)
-                }else{
+                } else {
                     getUnknownAppSourcesPermission.launch(intent1)
                     return
                 }
@@ -164,9 +164,9 @@ class MainActivity : ComponentActivity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if(resultCode == RESULT_OK){
+        if (resultCode == RESULT_OK) {
             startActivity(newInstallIntent())
-        }else{
+        } else {
             Toast.makeText(this, "请求权限失败", Toast.LENGTH_SHORT).show()
         }
     }
