@@ -4,7 +4,7 @@ import android.app.Application
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 
-class ApiApp :Application(){
+class ApiApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
@@ -15,6 +15,7 @@ class ApiApp :Application(){
             .addInterceptor(logging)
             .build()
     }
+
     companion object {
         //情况二：声明延迟初始化属性
         private lateinit var instance: ApiApp
