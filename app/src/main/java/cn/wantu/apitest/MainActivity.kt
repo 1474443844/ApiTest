@@ -24,6 +24,18 @@ import okio.sink
 import java.io.File
 
 class MainActivity : ComponentActivity() {
+    companion object{
+        lateinit var json:ApiTestConfig
+    }
+
+    private val getUnknownAppSourcesPermission = registerForActivityResult(ActivityResultContracts.StartActivityForResult()){ result ->
+        if(result.resultCode == RESULT_OK){
+            startActivity(newInstallIntent())
+        }else{
+            Toast.makeText(this, "请求权限失败", Toast.LENGTH_SHORT).show()
+        }
+    }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,7 +51,7 @@ class MainActivity : ComponentActivity() {
                     .build()
                 val response = client.newCall(request).execute()
                 val result = response.body?.string()
-                val json = Gson().fromJson(result, ApiTestConfig::class.java)
+                json = Gson().fromJson(result, ApiTestConfig::class.java)
                 val pi = packageManager.getPackageInfo(packageName, 0)
                 val currentVersion = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                     pi.longVersionCode
@@ -96,7 +108,7 @@ class MainActivity : ComponentActivity() {
                                                 .setTitle("下载成功")
                                                 .setMessage("File downloaded to: ${file.absolutePath}")
                                                 .setPositiveButton("安装") { _, _ ->
-                                                    installApk(file)
+                                                    installApk()
                                                 }.show()
                                         }
                                     }
@@ -119,42 +131,43 @@ class MainActivity : ComponentActivity() {
 
     }
 
-    private fun installApk(apkFile: File) {
-        if (!apkFile.exists()) {
-            // APK 文件不存在，处理错误
-            return
-        }
-        val intent = Intent(Intent.ACTION_VIEW)
+    private fun newInstallIntent() = Intent(Intent.ACTION_VIEW).apply {
+        val file = File(getExternalFilesDir(null), "ApiTest_${json.version}.apk")
         val apkUri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            FileProvider.getUriForFile(this, "${packageName}.fileprovider", apkFile)
+            FileProvider.getUriForFile(this@MainActivity, "${packageName}.fileprovider", file)
                 .apply {
-                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 }
         } else {
-            Uri.fromFile(apkFile)
+            Uri.fromFile(file)
         }
-        intent.setDataAndType(apkUri, "application/vnd.android.package-archive")
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        // 检查是否有权限安装未知来源的应用
+        setDataAndType(apkUri, "application/vnd.android.package-archive")
+        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    }
+
+    private fun installApk() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             if (!packageManager.canRequestPackageInstalls()) {
                 // 跳转到设置页面以请求安装未知应用的权限
                 val intent1 = Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES)
                 intent1.data = Uri.parse("package:${packageName}")
                 if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.R) {
-                    startActivity(intent1)
+                    startActivityForResult(intent1, -1)
                 }else{
-                    registerForActivityResult(ActivityResultContracts.StartActivityForResult()){ result ->
-                        if(result.resultCode == RESULT_OK){
-                            startActivity(intent)
-                        }else{
-                            Toast.makeText(this, "请求权限失败", Toast.LENGTH_SHORT).show()
-                        }
-                    }.launch(intent1)
+                    getUnknownAppSourcesPermission.launch(intent1)
                     return
                 }
             }
         }
-        startActivity(intent)
+        startActivity(newInstallIntent())
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if(resultCode == RESULT_OK){
+            startActivity(newInstallIntent())
+        }else{
+            Toast.makeText(this, "请求权限失败", Toast.LENGTH_SHORT).show()
+        }
     }
 }
